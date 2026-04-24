@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import SignUp from './pages/SignUp';
 import SignIn from './pages/SignIn';
+import Verify from './pages/Verify';
 import Dashboard from './pages/Dashboard';
 
 function ProtectedRoute({ children }) {
@@ -40,6 +41,8 @@ export default function App() {
               </PublicRoute>
             }
           />
+          {/* /verify is accessible to anyone — needed after sign-up or when returning with an unconfirmed account */}
+          <Route path="/verify" element={<Verify />} />
           <Route
             path="/dashboard"
             element={

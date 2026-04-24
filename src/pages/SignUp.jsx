@@ -2,23 +2,21 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signUp } from '../cognito';
 
-const COGNITO_ERRORS = {
-  UsernameExistsException: 'An account with that username already exists.',
+const ERRORS = {
   InvalidPasswordException: 'Password does not meet requirements (min 8 chars, upper, lower, number, symbol).',
-  InvalidParameterException: 'Invalid input. Check your username and password.',
+  InvalidParameterException: 'Invalid input. Check your email and password.',
   TooManyRequestsException: 'Too many attempts. Please wait a moment and try again.',
-  NotAuthorizedException: 'Not authorized to perform this action.',
+  NotAuthorizedException: 'Not authorised. Please try again.',
 };
 
 function friendlyError(err) {
-  return COGNITO_ERRORS[err.code] || err.message || 'An unexpected error occurred.';
+  return ERRORS[err.code] || err.message || 'An unexpected error occurred.';
 }
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -33,29 +31,20 @@ export default function SignUp() {
     setLoading(true);
     try {
       await signUp(email.trim().toLowerCase(), password);
-      setSuccess(true);
+      // Store email so /verify can confirm without asking again
+      sessionStorage.setItem('pendingVerificationEmail', email.trim().toLowerCase());
+      navigate('/verify');
     } catch (err) {
-      setError(friendlyError(err));
+      if (err.code === 'UsernameExistsException') {
+        // Account exists but may be unconfirmed — send them to verify
+        sessionStorage.setItem('pendingVerificationEmail', email.trim().toLowerCase());
+        navigate('/verify', { state: { alreadyExists: true } });
+      } else {
+        setError(friendlyError(err));
+      }
     } finally {
       setLoading(false);
     }
-  }
-
-  if (success) {
-    return (
-      <div className="auth-container">
-        <div className="auth-card">
-          <h1>Check your email</h1>
-          <p className="success-msg">
-            Account created. A verification code has been sent to your email. Once verified, you
-            can sign in.
-          </p>
-          <Link to="/signin" className="btn btn-primary">
-            Go to Sign In
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (

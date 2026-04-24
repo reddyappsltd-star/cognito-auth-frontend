@@ -1,26 +1,27 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signIn } from '../cognito';
 import { useAuth } from '../AuthContext';
 
-const COGNITO_ERRORS = {
-  NotAuthorizedException: 'Incorrect username or password.',
-  UserNotFoundException: 'Incorrect username or password.',
-  UserNotConfirmedException: 'Your account has not been confirmed. Check your email for a verification code.',
+const ERRORS = {
+  NotAuthorizedException: 'Incorrect email or password.',
+  UserNotFoundException: 'Incorrect email or password.',
   PasswordResetRequiredException: 'A password reset is required for this account.',
   TooManyRequestsException: 'Too many attempts. Please wait a moment and try again.',
   NewPasswordRequired: 'A new password is required. Please contact support.',
-  NetworkError: 'Network error. Check your connection and try again.',
 };
 
 function friendlyError(err) {
   if (err.code === 'NetworkError' || err.message?.toLowerCase().includes('network')) {
-    return COGNITO_ERRORS.NetworkError;
+    return 'Network error. Check your connection and try again.';
   }
-  return COGNITO_ERRORS[err.code] || err.message || 'An unexpected error occurred.';
+  return ERRORS[err.code] || err.message || 'An unexpected error occurred.';
 }
 
 export default function SignIn() {
+  const location = useLocation();
+  const justVerified = location.state?.verified ?? false;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -42,6 +43,12 @@ export default function SignIn() {
       setSession(session);
       navigate('/dashboard');
     } catch (err) {
+      if (err.code === 'UserNotConfirmedException') {
+        // Account exists but isn't confirmed — send to verify page
+        sessionStorage.setItem('pendingVerificationEmail', email.trim().toLowerCase());
+        navigate('/verify', { state: { fromSignIn: true } });
+        return;
+      }
       setError(friendlyError(err));
     } finally {
       setLoading(false);
@@ -52,6 +59,13 @@ export default function SignIn() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>Sign in</h1>
+
+        {justVerified && (
+          <p className="success-msg">
+            Account confirmed! You can now sign in.
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
             <label htmlFor="email">Email</label>
