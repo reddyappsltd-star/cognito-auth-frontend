@@ -15,7 +15,7 @@ function friendlyError(err) {
 }
 
 export default function SignUp() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,12 +26,13 @@ export default function SignUp() {
     e.preventDefault();
     setError('');
 
-    if (!username.trim()) return setError('Username is required.');
+    if (!email.trim()) return setError('Email is required.');
+    if (!email.includes('@')) return setError('Please enter a valid email address.');
     if (!password) return setError('Password is required.');
 
     setLoading(true);
     try {
-      await signUp(username.trim(), password);
+      await signUp(email.trim().toLowerCase(), password);
       setSuccess(true);
     } catch (err) {
       setError(friendlyError(err));
@@ -63,13 +64,13 @@ export default function SignUp() {
         <h1>Create account</h1>
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email</label>
             <input
-              id="username"
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
             />
           </div>

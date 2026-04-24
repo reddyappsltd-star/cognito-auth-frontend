@@ -12,9 +12,12 @@ const poolData = {
 
 export const userPool = new CognitoUserPool(poolData);
 
-export function signUp(username, password) {
+export function signUp(email, password) {
   return new Promise((resolve, reject) => {
-    userPool.signUp(username, password, [], null, (err, result) => {
+    // When username_attributes = ["email"], the email IS the username.
+    // We also pass it as a standard attribute so Cognito stores it properly.
+    const emailAttr = new CognitoUserAttribute({ Name: 'email', Value: email });
+    userPool.signUp(email, password, [emailAttr], null, (err, result) => {
       if (err) return reject(err);
       resolve(result);
     });

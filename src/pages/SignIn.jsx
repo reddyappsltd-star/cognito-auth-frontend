@@ -21,7 +21,7 @@ function friendlyError(err) {
 }
 
 export default function SignIn() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,12 +32,13 @@ export default function SignIn() {
     e.preventDefault();
     setError('');
 
-    if (!username.trim()) return setError('Username is required.');
+    if (!email.trim()) return setError('Email is required.');
+    if (!email.includes('@')) return setError('Please enter a valid email address.');
     if (!password) return setError('Password is required.');
 
     setLoading(true);
     try {
-      const { session } = await signIn(username.trim(), password);
+      const { session } = await signIn(email.trim().toLowerCase(), password);
       setSession(session);
       navigate('/dashboard');
     } catch (err) {
@@ -53,13 +54,13 @@ export default function SignIn() {
         <h1>Sign in</h1>
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email</label>
             <input
-              id="username"
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
             />
           </div>
